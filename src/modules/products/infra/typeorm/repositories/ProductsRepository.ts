@@ -27,10 +27,6 @@ class ProductsRepository implements IProductsRepository {
       quantity,
     });
 
-    if (product.name) {
-      throw new Error('Product already exists.');
-    }
-
     await this.ormRepository.save(product);
 
     return product;
@@ -51,9 +47,20 @@ class ProductsRepository implements IProductsRepository {
   public async updateQuantity(
     products: IUpdateProductsQuantityDTO[],
   ): Promise<Product[]> {
-    const findProduct = await this.findAllById(
+    const FindProducts = await this.findAllById(
       products.map(product => ({ id: product.id })),
     );
+
+    const updatedProducts = FindProducts.map(product => ({
+      ...product,
+      quantity:
+        product.quantity -
+        (products.find(({ id }) => id === product.id)?.quantity || 0),
+    }));
+
+    await this.ormRepository.save(updatedProducts);
+
+    return updatedProducts;
   }
 }
 
